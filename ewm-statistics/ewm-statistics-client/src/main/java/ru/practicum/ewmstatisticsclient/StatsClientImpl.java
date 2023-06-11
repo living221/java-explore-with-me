@@ -2,6 +2,7 @@ package ru.practicum.ewmstatisticsclient;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -17,6 +18,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@PropertySource("classpath:stats-application.properties")
 public class StatsClientImpl implements StatsClient {
 
     @Value("${statistics-server.url}")
