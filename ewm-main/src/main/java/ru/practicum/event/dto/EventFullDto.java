@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.category.dto.CategoryDto;
+import ru.practicum.event.model.EventState;
+import ru.practicum.location.dto.LocationDto;
 import ru.practicum.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
@@ -14,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EventShortDto {
+public class EventFullDto {
     private Long id;
 
     private String annotation;
@@ -24,11 +26,27 @@ public class EventShortDto {
     private Integer confirmedRequests;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdOn;
+
+    private String description;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
     private UserShortDto initiator;
 
+    private LocationDto location;
+
     private Boolean paid;
+
+    private Integer participantLimit;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime publishedOn;
+
+    private Boolean requestModeration;
+
+    private EventState state;
 
     private String title;
 
