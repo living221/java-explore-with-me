@@ -41,9 +41,9 @@ public class EndpointHitServiceImpl implements EndpointHitService {
         LocalDateTime startDate = LocalDateTime.parse(URLDecoder.decode(start, StandardCharsets.UTF_8), FORMATTER);
         LocalDateTime endDate = LocalDateTime.parse(URLDecoder.decode(end, StandardCharsets.UTF_8), FORMATTER);
 
-        if (startDate.isAfter(endDate)) {
-            throw new TimestampException("End time cannot be before start time.");
-        }
+        checkDate(startDate, endDate);
+
+
 
         List<ViewStat> result;
         if (unique) {
@@ -63,5 +63,14 @@ public class EndpointHitServiceImpl implements EndpointHitService {
         return result.stream()
                 .map(ViewStatMapper::toViewStatDto)
                 .collect(Collectors.toList());
+    }
+
+    private void checkDate(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate == null || endDate == null) {
+            throw new TimestampException("Start date or end date cannot be null");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new TimestampException("End time cannot be before start time.");
+        }
     }
 }
