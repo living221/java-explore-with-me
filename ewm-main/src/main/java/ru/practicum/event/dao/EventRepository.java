@@ -7,8 +7,10 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.stereotype.Repository;
 import ru.practicum.event.model.Event;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPredicateExecutor<Event> {
@@ -22,4 +24,6 @@ public interface EventRepository extends JpaRepository<Event, Long>, QuerydslPre
             "WHERE e.id = :eventId " +
             "AND e.state = 'PUBLISHED'")
     Optional<Event> findByIdAndPublished(Long eventId);
+
+    Set<Event> getByIdIn(Collection<Long> ids);
 }

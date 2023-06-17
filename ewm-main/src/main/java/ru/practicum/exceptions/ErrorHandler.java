@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -73,6 +74,30 @@ public class ErrorHandler {
         return ErrorResponse.builder()
                 .status(HttpStatus.CONFLICT.name())
                 .reason("Integrity constraint has been violated.")
+                .message(e.getMessage())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBadRequestException(BadRequestException e) {
+        log.warn("Bad or missing parameters warning");
+
+        return ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Bad or missing parameters")
+                .message(e.getMessage())
+                .build();
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+        log.warn("Missing request parameter warning");
+
+        return ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.name())
+                .reason("Missing request parameter")
                 .message(e.getMessage())
                 .build();
     }

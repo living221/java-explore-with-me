@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.dao.CategoryRepository;
 import ru.practicum.category.model.Category;
+import ru.practicum.dto.ViewStatDto;
 import ru.practicum.event.dao.EventRepository;
 import ru.practicum.event.dto.*;
 import ru.practicum.event.model.Event;
@@ -16,9 +17,9 @@ import ru.practicum.event.model.EventState;
 import ru.practicum.event.model.QEvent;
 import ru.practicum.event.model.StateAction;
 import ru.practicum.ewmstatisticsclient.StatsClient;
+import ru.practicum.exceptions.BadRequestException;
 import ru.practicum.exceptions.ConflictException;
 import ru.practicum.exceptions.ObjectNotFoundException;
-import ru.practicum.location.LocationMapper;
 import ru.practicum.location.dao.LocationRepository;
 import ru.practicum.location.dto.LocationDto;
 import ru.practicum.location.model.Location;
@@ -27,7 +28,10 @@ import ru.practicum.user.model.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -82,8 +86,11 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = eventRepository.findByInitiatorIdOrderByEventDateDesc(userId, pageable);
 
+        Map<Long, Integer> hits = getStatsFromEvents(events);
+
         return events.stream()
                 .map(e -> toEventShortDto(e, toCategoryDto(e.getCategory()), toUserShortDto(e.getInitiator())))
+                .peek(e -> e.setViews(hits.getOrDefault(e.getId(), 0)))
                 .collect(Collectors.toList());
     }
 
@@ -96,10 +103,16 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId).orElseThrow(
                 () -> new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
 
-        return toEventFullDto(event,
+        Map<Long, Integer> hits = getStatsFromEvents(List.of(event));
+
+        EventFullDto eventFullDto = toEventFullDto(event,
                 toCategoryDto(event.getCategory()),
                 toUserShortDto(event.getInitiator()),
                 toLocationDto(event.getLocation()));
+
+        eventFullDto.setViews(hits.getOrDefault(eventId, 0));
+
+        return eventFullDto;
     }
 
     @Override
@@ -136,10 +149,16 @@ public class EventServiceImpl implements EventService {
 
         Event updatedEvent = eventRepository.save(event);
 
-        return toEventFullDto(updatedEvent,
+        Map<Long, Integer> hits = getStatsFromEvents(List.of(event));
+
+        EventFullDto eventFullDto = toEventFullDto(updatedEvent,
                 toCategoryDto(updatedEvent.getCategory()),
                 toUserShortDto(updatedEvent.getInitiator()),
                 toLocationDto(updatedEvent.getLocation()));
+
+        eventFullDto.setViews(hits.getOrDefault(eventId, 0));
+
+        return eventFullDto;
     }
 
     @Override
@@ -153,7 +172,14 @@ public class EventServiceImpl implements EventService {
                                          Integer from,
                                          Integer size,
                                          HttpServletRequest request) {
-//        createHit(request);
+        createHit(request);
+
+        if (rangeStart != null && rangeEnd != null) {
+            if (rangeEnd.isBefore(rangeStart)) {
+                throw new BadRequestException(String.format("Start date=%s cannot be before end date=%s",
+                        rangeStart, rangeEnd));
+            }
+        }
 
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -191,23 +217,30 @@ public class EventServiceImpl implements EventService {
         Iterable<Event> events = eventRepository.findAll(builder, pageable);
         List<Event> result = StreamSupport.stream(events.spliterator(), false).collect(Collectors.toList());
 
+        Map<Long, Integer> hits = getStatsFromEvents(result);
+
         return result.stream()
                 .map(e -> toEventShortDto(e, toCategoryDto(e.getCategory()), toUserShortDto(e.getInitiator())))
+                .peek(e -> e.setViews(hits.getOrDefault(e.getId(), 0)))
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public EventFullDto getPublicEventById(Long eventId, HttpServletRequest request) {
-//        createHit(request);
+        createHit(request);
 
         Event event = eventRepository.findByIdAndPublished(eventId).orElseThrow(() ->
                 new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
 
-        return toEventFullDto(event,
+        EventFullDto eventFullDto = toEventFullDto(event,
                 toCategoryDto(event.getCategory()),
                 toUserShortDto(event.getInitiator()),
                 toLocationDto(event.getLocation()));
+
+        Map<Long, Integer> hits = getStatsFromEvents(List.of(event));
+        eventFullDto.setViews(hits.get(eventId));
+        return eventFullDto;
     }
 
     @Override
@@ -282,11 +315,39 @@ public class EventServiceImpl implements EventService {
 
     private void createHit(HttpServletRequest request) {
         String app = "ewm-main-service";
-        statsClient.save(app, request.getRequestURI(), request.getRemoteAddr(), LocalDateTime.now());
+        statsClient.save(app, request.getRequestURI(), request.getRemoteAddr(),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+    }
+
+    private Map<Long, Integer> getStatsFromEvents(List<Event> events) {
+        Map<Long, Integer> hits = new HashMap<>();
+
+        List<Long> eventIds = events.stream()
+                .map(Event::getId)
+                .collect(Collectors.toList());
+
+        List<String> uris = eventIds.stream()
+                .map(i -> "/events/" + i)
+                .collect(Collectors.toList());
+
+        String start = LocalDateTime.now().minusYears(50).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String end = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        List<ViewStatDto> viewStatDtos = statsClient.get(start, end, uris, true);
+
+        for (ViewStatDto viewStatDto : viewStatDtos) {
+            String uri = viewStatDto.getUri();
+            hits.put(Long.parseLong(uri.substring(8)), Math.toIntExact(viewStatDto.getHits()));
+        }
+        return hits;
     }
 
     private void updateEventParams(UpdateEventRequest updateEventRequest, Event event) {
         if (!Objects.isNull(updateEventRequest.getAnnotation())) {
+            if (updateEventRequest.getAnnotation().length() < 20 ||
+                    updateEventRequest.getAnnotation().length() > 2000) {
+                throw new BadRequestException("Annotation length cannot be less than 20 or more than 2000");
+            }
             event.setAnnotation(updateEventRequest.getAnnotation());
         }
 
@@ -299,6 +360,10 @@ public class EventServiceImpl implements EventService {
         }
 
         if (!Objects.isNull(updateEventRequest.getDescription())) {
+            if (updateEventRequest.getDescription().length() < 20 ||
+                    updateEventRequest.getDescription().length() > 7000) {
+                throw new BadRequestException("Description length cannot be less than 20 or more than 7000");
+            }
             event.setDescription(updateEventRequest.getDescription());
         }
 
@@ -308,8 +373,8 @@ public class EventServiceImpl implements EventService {
         }
 
         if (!Objects.isNull(updateEventRequest.getLocation())) {
-            getLocationOrAddNew(updateEventRequest.getLocation());
-            event.setLocation(LocationMapper.toLocation(updateEventRequest.getLocation()));
+            Location foundOrAddedLocation = getLocationOrAddNew(updateEventRequest.getLocation());
+            event.setLocation(foundOrAddedLocation);
         }
 
         if (!Objects.isNull(updateEventRequest.getPaid())) {
@@ -325,6 +390,10 @@ public class EventServiceImpl implements EventService {
         }
 
         if (!Objects.isNull(updateEventRequest.getTitle())) {
+            if (updateEventRequest.getTitle().length() < 3 ||
+                    updateEventRequest.getTitle().length() > 120) {
+                throw new BadRequestException("Title length cannot be less than 3 or more than 120");
+            }
             event.setTitle(updateEventRequest.getTitle());
         }
     }
@@ -342,8 +411,7 @@ public class EventServiceImpl implements EventService {
 
     private void validateEventDate(LocalDateTime eventDate) {
         if (LocalDateTime.now().plusHours(2).isAfter(eventDate)) {
-            throw new ConflictException(String.format("Field: eventDate. " +
-                    "Error: должно содержать дату, которая еще не наступила. Value: %s", eventDate));
+            throw new BadRequestException(String.format("Event date=%s cannot be before now + 2 hours date.", eventDate));
         }
     }
 }

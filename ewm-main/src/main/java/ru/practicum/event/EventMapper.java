@@ -14,6 +14,8 @@ import ru.practicum.user.dto.UserShortDto;
 import ru.practicum.user.model.User;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.Set;
 
 @UtilityClass
 public class EventMapper {
@@ -38,7 +40,7 @@ public class EventMapper {
                 .id(event.getId())
                 .category(categoryDto)
                 .annotation(event.getAnnotation())
-                .confirmedRequests(0)
+                .confirmedRequests(Optional.ofNullable(event.getParticipants()).orElse(Set.of()).size())
                 .createdOn(event.getCreatedOn())
                 .description(event.getDescription())
                 .eventDate(event.getEventDate())

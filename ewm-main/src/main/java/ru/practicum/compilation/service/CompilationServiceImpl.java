@@ -14,6 +14,7 @@ import ru.practicum.event.dao.EventRepository;
 import ru.practicum.event.model.Event;
 import ru.practicum.exceptions.ObjectNotFoundException;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -61,8 +62,13 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
     @Override
+    @Transactional
     public CompilationDto createCompilation(NewCompilationDto newCompilationDto) {
-        Set<Event> events = Set.copyOf(eventRepository.findAllById(newCompilationDto.getEvents()));
+        Set<Event> events = new HashSet<>();
+
+        if (!Objects.isNull(newCompilationDto.getEvents())) {
+            events = eventRepository.getByIdIn(newCompilationDto.getEvents());
+        }
 
         Compilation compilation = toCompilation(newCompilationDto, events);
 
@@ -85,12 +91,17 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
     @Override
+    @Transactional
     public CompilationDto updateCompilation(Long compId, UpdateCompilationRequest updateCompilationRequest) {
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(() -> {
             throw new ObjectNotFoundException(String.format("Compilation with id=%s was not found", compId));
         });
 
-        Set<Event> events = Set.copyOf(eventRepository.findAllById(updateCompilationRequest.getEvents()));
+        Set<Event> events = new HashSet<>();
+
+        if (!Objects.isNull(updateCompilationRequest.getEvents())) {
+            events = eventRepository.getByIdIn(updateCompilationRequest.getEvents());
+        }
         compilation.setEvents(events);
 
         if (!Objects.isNull(updateCompilationRequest.getTitle())) {
