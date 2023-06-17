@@ -172,7 +172,6 @@ public class EventServiceImpl implements EventService {
                                          Integer from,
                                          Integer size,
                                          HttpServletRequest request) {
-        createHit(request);
 
         if (rangeStart != null && rangeEnd != null) {
             if (rangeEnd.isBefore(rangeStart)) {
@@ -217,6 +216,8 @@ public class EventServiceImpl implements EventService {
         Iterable<Event> events = eventRepository.findAll(builder, pageable);
         List<Event> result = StreamSupport.stream(events.spliterator(), false).collect(Collectors.toList());
 
+        createHit(request);
+
         Map<Long, Integer> hits = getStatsFromEvents(result);
 
         return result.stream()
@@ -228,7 +229,6 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public EventFullDto getPublicEventById(Long eventId, HttpServletRequest request) {
-        createHit(request);
 
         Event event = eventRepository.findByIdAndPublished(eventId).orElseThrow(() ->
                 new ObjectNotFoundException(String.format("Event with id=%s was not found", eventId)));
@@ -237,6 +237,8 @@ public class EventServiceImpl implements EventService {
                 toCategoryDto(event.getCategory()),
                 toUserShortDto(event.getInitiator()),
                 toLocationDto(event.getLocation()));
+
+        createHit(request);
 
         Map<Long, Integer> hits = getStatsFromEvents(List.of(event));
         eventFullDto.setViews(hits.get(eventId));
