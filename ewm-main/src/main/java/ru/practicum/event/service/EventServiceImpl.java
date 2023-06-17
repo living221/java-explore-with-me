@@ -180,6 +180,7 @@ public class EventServiceImpl implements EventService {
             }
         }
 
+        List<Event> result;
         BooleanBuilder builder = new BooleanBuilder();
 
         if (!Objects.isNull(text)) {
@@ -188,7 +189,11 @@ public class EventServiceImpl implements EventService {
         }
 
         if (!Objects.isNull(paid)) {
-            builder.and((QEvent.event.paid.isTrue()));
+            if (paid) {
+                builder.and((QEvent.event.paid.isTrue()));
+            } else {
+                builder.and((QEvent.event.paid.isFalse()));
+            }
         }
 
         if (!Objects.isNull(categories)) {
@@ -214,16 +219,23 @@ public class EventServiceImpl implements EventService {
         Pageable pageable = PageRequest.of(from, size, eventSort);
 
         Iterable<Event> events = eventRepository.findAll(builder, pageable);
-        List<Event> result = StreamSupport.stream(events.spliterator(), false).collect(Collectors.toList());
+        result = StreamSupport.stream(events.spliterator(), false).collect(Collectors.toList());
 
         createHit(request);
 
-        Map<Long, Integer> hits = getStatsFromEvents(result);
-
-        return result.stream()
+        Map<Long, Integer> hits = new HashMap<>();
+        if (!result.isEmpty()) {
+            hits = getStatsFromEvents(result);
+        }
+        List<EventShortDto> eventShortDtos = result.stream()
                 .map(e -> toEventShortDto(e, toCategoryDto(e.getCategory()), toUserShortDto(e.getInitiator())))
-                .peek(e -> e.setViews(hits.getOrDefault(e.getId(), 0)))
                 .collect(Collectors.toList());
+
+        for (EventShortDto eventShortDto : eventShortDtos) {
+            eventShortDto.setViews(hits.getOrDefault(eventShortDto.getId(), 0));
+        }
+
+        return eventShortDtos;
     }
 
     @Override
@@ -247,6 +259,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventFullDto> getEventsAdmin(List<Long> users, List<EventState> states, List<Long> categories, LocalDateTime rangeStart, LocalDateTime rangeEnd, Integer from, Integer size) {
+        List<Event> result;
+
         BooleanBuilder builder = new BooleanBuilder();
 
         if (!Objects.isNull(users)) {
@@ -267,7 +281,7 @@ public class EventServiceImpl implements EventService {
 
         Pageable pageable = PageRequest.of(from, size);
         Iterable<Event> events = eventRepository.findAll(builder, pageable);
-        List<Event> result = StreamSupport.stream(events.spliterator(), false).collect(Collectors.toList());
+        result = StreamSupport.stream(events.spliterator(), false).collect(Collectors.toList());
 
         return result.stream()
                 .map(e -> toEventFullDto(e,
