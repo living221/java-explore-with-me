@@ -43,18 +43,24 @@ public class PublicEventController {
                                          HttpServletRequest request) {
 
         LocalDateTime rangeStart = null;
-        if (rangeEndString != null) {
-            String decodedRangeStart = URLDecoder.decode(rangeStartString, StandardCharsets.UTF_8);
-            rangeStart = LocalDateTime.parse(decodedRangeStart, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        LocalDateTime rangeEnd = null;
+
+        if (rangeStartString != null) {
+            rangeStart = decodeDate(rangeStartString);
         }
 
-        LocalDateTime rangeEnd = null;
         if (rangeEndString != null) {
-            String decodedRangeEnd = URLDecoder.decode(rangeEndString, StandardCharsets.UTF_8);
-            rangeEnd = LocalDateTime.parse(decodedRangeEnd, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            rangeEnd = decodeDate(rangeEndString);
         }
 
         return eventService.getEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, request);
+    }
+
+    private LocalDateTime decodeDate(String dateString) {
+        LocalDateTime rangeStart;
+        String decodedRangeStart = URLDecoder.decode(dateString, StandardCharsets.UTF_8);
+        rangeStart = LocalDateTime.parse(decodedRangeStart, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        return rangeStart;
     }
 
     @GetMapping("/{eventId}")
