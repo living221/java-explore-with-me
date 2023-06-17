@@ -11,7 +11,10 @@ import ru.practicum.exceptions.TimestampException;
 import ru.practicum.model.EndpointHit;
 import ru.practicum.model.ViewStat;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +24,7 @@ import static ru.practicum.EndpointHitMapper.toEndpointHitDto;
 @Service
 @RequiredArgsConstructor
 public class EndpointHitServiceImpl implements EndpointHitService {
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final EndpointHitRepository endpointHitRepository;
 
     @Override
@@ -33,8 +37,14 @@ public class EndpointHitServiceImpl implements EndpointHitService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ViewStatDto> getStats(LocalDateTime startDate, LocalDateTime endDate, List<String> uris, Boolean unique) {
-        checkDate(startDate, endDate);
+    public List<ViewStatDto> getStats(String start, String end, List<String> uris, Boolean unique) {
+
+        LocalDateTime startDate = checkDate(start);
+        LocalDateTime endDate = checkDate(end);
+
+        if (startDate.isAfter(endDate)) {
+            throw new TimestampException("End time cannot be before start time.");
+        }
 
         List<ViewStat> result;
         if (unique) {
@@ -56,12 +66,10 @@ public class EndpointHitServiceImpl implements EndpointHitService {
                 .collect(Collectors.toList());
     }
 
-    private void checkDate(LocalDateTime startDate, LocalDateTime endDate) {
-        if (startDate == null || endDate == null) {
+    private LocalDateTime checkDate(String dateString) {
+        if (dateString == null) {
             throw new TimestampException("Start date or end date cannot be null");
         }
-        if (startDate.isAfter(endDate)) {
-            throw new TimestampException("End time cannot be before start time.");
-        }
+        return LocalDateTime.parse(URLDecoder.decode(dateString, StandardCharsets.UTF_8), FORMATTER);
     }
 }
