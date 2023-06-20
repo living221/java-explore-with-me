@@ -1,4 +1,4 @@
-package ru.practicum.rating;
+package ru.practicum.rating.model;
 
 import java.io.Serializable;
 

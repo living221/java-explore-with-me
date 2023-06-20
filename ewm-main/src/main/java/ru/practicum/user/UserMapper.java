@@ -7,14 +7,23 @@ import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.dto.UserShortDto;
 import ru.practicum.user.model.User;
 
+import java.util.Objects;
+
 @UtilityClass
 public class UserMapper {
     public static UserDto toUserDto(User user) {
-        return UserDto.builder()
+        UserDto userDto = UserDto.builder()
                 .id(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .build();
+
+        if (Objects.isNull(user.getRatings())) {
+            userDto.setRating(0);
+        } else {
+            userDto.setRating(RatingScore.calculate(user.getRatings()));
+        }
+        return userDto;
     }
 
     public static User toUser(NewUserRequest newUserRequest) {

@@ -47,4 +47,17 @@ public class PrivateEventController {
                                              @RequestBody UpdateEventRequest updateEventRequest) {
         return eventService.updateEventByEventId(userId, eventId, updateEventRequest);
     }
+
+    @PostMapping("/{eventId}/rating")
+    public void addRating(@PathVariable("userId") Long userId,
+                          @PathVariable("eventId") Long eventId,
+                          @RequestParam Boolean isPositive) {
+        eventService.addRating(userId, eventId, isPositive);
+    }
+
+    @DeleteMapping("/{eventId}/rating")
+    public void deleteRating(@PathVariable("userId") Long userId,
+                             @PathVariable("eventId") Long eventId) {
+        eventService.deleteRating(userId, eventId);
+    }
 }

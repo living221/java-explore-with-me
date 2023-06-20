@@ -38,4 +38,8 @@ public interface EventService {
                                       Integer size);
 
     EventFullDto updateEventAdmin(Long eventId, UpdateEventRequest updateEventRequest);
+
+    void addRating(Long userId, Long eventId, Boolean isPositive);
+
+    void deleteRating(Long userId, Long eventId);
 }
