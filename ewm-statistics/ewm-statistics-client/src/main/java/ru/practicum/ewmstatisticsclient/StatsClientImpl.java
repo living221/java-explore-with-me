@@ -1,8 +1,9 @@
 package ru.practicum.ewmstatisticsclient;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,36 +12,41 @@ import ru.practicum.dto.EndPointHitDto;
 import ru.practicum.dto.ViewStatDto;
 
 import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
 @Service
-@RequiredArgsConstructor
+@PropertySource("classpath:stats-application.properties")
 public class StatsClientImpl implements StatsClient {
 
-    @Value("${statistics-server.url}")
-    private String statServerUrl;
+    private final WebClient webClient;
 
-    private final WebClient webClient = WebClient.builder()
-            .baseUrl(statServerUrl)
-            .build();
+    public StatsClientImpl(@Value("${statistics-server.url}") String serverUrl) {
+        webClient = WebClient.builder()
+                .baseUrl(serverUrl)
+                .build();
+    }
 
     @Override
-    public void save(String app, String uri, String ip, LocalDateTime localDateTime) {
+    public ResponseEntity<EndPointHitDto> save(String app, String uri, String ip, String timestamp) {
         EndPointHitDto endPointHitDto = EndPointHitDto.builder()
                 .app(app)
                 .uri(uri)
                 .ip(ip)
-                .timestamp(localDateTime)
+                .timestamp(LocalDateTime.parse(URLDecoder.decode(timestamp, StandardCharsets.UTF_8),
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .build();
 
-        webClient.post()
+        return webClient.post()
                 .uri("/hit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(BodyInserters.fromValue(endPointHitDto))
                 .retrieve()
-                .bodyToMono(EndPointHitDto.class)
+                .toEntity(EndPointHitDto.class)
                 .block();
     }
 
