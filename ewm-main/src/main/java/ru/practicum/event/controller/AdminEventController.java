@@ -24,16 +24,12 @@ public class AdminEventController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventFullDto> getEventsAdmin(@RequestParam(required = false)
-                                             List<Long> users,
-                                             @RequestParam(required = false)
-                                             List<EventState> states,
-                                             @RequestParam(required = false)
-                                             List<Long> categories,
+    public List<EventFullDto> getEventsAdmin(@RequestParam(required = false) List<Long> users,
+                                             @RequestParam(required = false) List<EventState> states,
+                                             @RequestParam(required = false) List<Long> categories,
                                              @RequestParam(value = "rangeStart", required = false)
                                              String rangeStartString,
-                                             @RequestParam(value = "rangeEnd", required = false)
-                                             String rangeEndString,
+                                             @RequestParam(value = "rangeEnd", required = false) String rangeEndString,
                                              @RequestParam(defaultValue = "0") @Min(0) Integer from,
                                              @RequestParam(defaultValue = "10") @Min(1) Integer size) {
         LocalDateTime rangeStart = null;
@@ -58,10 +54,8 @@ public class AdminEventController {
     }
 
     @PatchMapping("/{eventId}")
-    public EventFullDto updateEventAdmin(
-            @PathVariable("eventId") Long eventId,
-            @RequestBody UpdateEventRequest updateEventRequest
-    ) {
+    public EventFullDto updateEventAdmin(@PathVariable("eventId") Long eventId,
+                                         @RequestBody UpdateEventRequest updateEventRequest) {
         return eventService.updateEventAdmin(eventId, updateEventRequest);
     }
 }

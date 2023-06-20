@@ -17,6 +17,6 @@ public class UpdateCompilationRequest {
 
     private Boolean pinned;
 
-    @Size(max = 50)
+    @Size(max = 50, message = "title cannot be more than 50")
     private String title;
 }

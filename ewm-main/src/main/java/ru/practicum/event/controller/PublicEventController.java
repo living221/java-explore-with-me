@@ -25,16 +25,11 @@ public class PublicEventController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventShortDto> getEvents(@RequestParam(value = "text", required = false)
-                                         String text,
-                                         @RequestParam(value = "categories", required = false)
-                                         List<Long> categories,
-                                         @RequestParam(value = "paid", required = false)
-                                         Boolean paid,
-                                         @RequestParam(value = "rangeStart", required = false)
-                                         String rangeStartString,
-                                         @RequestParam(value = "rangeEnd", required = false)
-                                         String rangeEndString,
+    public List<EventShortDto> getEvents(@RequestParam(value = "text", required = false) String text,
+                                         @RequestParam(value = "categories", required = false) List<Long> categories,
+                                         @RequestParam(value = "paid", required = false) Boolean paid,
+                                         @RequestParam(value = "rangeStart", required = false) String rangeStartString,
+                                         @RequestParam(value = "rangeEnd", required = false) String rangeEndString,
                                          @RequestParam(value = "onlyAvailable", defaultValue = "false")
                                          Boolean onlyAvailable,
                                          @RequestParam(value = "sort", required = false) EventSortType sort,

@@ -21,8 +21,7 @@ public class AdminCompilationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CompilationDto createCompilation(@RequestBody @Valid NewCompilationDto newCompilationDto
-    ) {
+    public CompilationDto createCompilation(@RequestBody @Valid NewCompilationDto newCompilationDto) {
         return compilationService.createCompilation(newCompilationDto);
     }
 
@@ -33,10 +32,8 @@ public class AdminCompilationController {
     }
 
     @PatchMapping("/{compId}")
-    public CompilationDto updateCompilation(
-            @PathVariable("compId") Long compId,
-            @RequestBody @Valid UpdateCompilationRequest updateCompilationRequest
-    ) {
+    public CompilationDto updateCompilation(@PathVariable("compId") Long compId,
+                                            @RequestBody @Valid UpdateCompilationRequest updateCompilationRequest) {
         return compilationService.updateCompilation(compId, updateCompilationRequest);
     }
 }

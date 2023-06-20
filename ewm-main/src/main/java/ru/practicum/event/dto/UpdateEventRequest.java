@@ -18,13 +18,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class UpdateEventRequest {
-    @Size(min = 20, max = 2000)
+    @Size(min = 20, max = 2000, message = "annotation cannot be less than 20 or more than 2000.")
     private String annotation;
 
-    @Positive
+    @Positive(message = "category id cannot be negative or zero.")
     private Long category;
 
-    @Size(min = 20, max = 7000)
+    @Size(min = 20, max = 7000, message = "description cannot be less than 20 or more than 7000.")
     private String description;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -34,13 +34,13 @@ public class UpdateEventRequest {
 
     private Boolean paid;
 
-    @PositiveOrZero
+    @PositiveOrZero(message = "participant limit cannot be negative.")
     private Integer participantLimit;
 
     private Boolean requestModeration;
 
     private StateAction stateAction;
 
-    @Size(min = 3, max = 120)
+    @Size(min = 3, max = 120, message = "title cannot be less than 3 or more than 120.")
     private String title;
 }

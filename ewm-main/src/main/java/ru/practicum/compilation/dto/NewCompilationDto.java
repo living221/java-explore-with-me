@@ -19,7 +19,7 @@ public class NewCompilationDto {
     @Builder.Default
     private Boolean pinned = false;
 
-    @NotBlank
-    @Size(min = 1, max = 50)
+    @NotBlank(message = "title cannot be empty or null.")
+    @Size(min = 1, max = 50, message = "title cannot be less 1 or more than 50.")
     private String title;
 }

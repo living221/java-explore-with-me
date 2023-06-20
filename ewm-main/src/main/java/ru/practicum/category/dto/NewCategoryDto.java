@@ -17,5 +17,5 @@ import javax.validation.constraints.Size;
 public class NewCategoryDto {
     @NotBlank(groups = {Create.class, Update.class}, message = "name cannot be empty or null.")
     @Size(groups = {Create.class, Update.class}, min = 1, max = 50, message = "name cannot < 0 and > 50 symbols.")
-    String name;
+    private String name;
 }
