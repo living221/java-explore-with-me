@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS events CASCADE;
 DROP TABLE IF EXISTS categories CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
+DROP TABLE IF EXISTS ratings CASCADE;
 
 CREATE TABLE IF NOT EXISTS categories
 (
@@ -75,4 +76,15 @@ CREATE TABLE IF NOT EXISTS compilation_events
     PRIMARY KEY (compilation_id, event_id),
     CONSTRAINT compilation_events_compilations_fk FOREIGN KEY (compilation_id) references users,
     CONSTRAINT compilation_events_events_fk FOREIGN KEY (event_id) references events
+);
+
+CREATE TABLE IF NOT EXISTS ratings
+(
+    user_id      BIGINT  NOT NULL,
+    event_id     BIGINT  NOT NULL,
+    is_positive  BOOLEAN NOT NULL,
+    initiator_id BIGINT  NOT NULL,
+    PRIMARY KEY (user_id, event_id),
+    CONSTRAINT ratings_users_fk FOREIGN KEY (user_id) REFERENCES users,
+    CONSTRAINT ratings_events_fk FOREIGN KEY (event_id) references events
 );
