@@ -56,6 +56,7 @@ public class PrivateEventController {
     }
 
     @DeleteMapping("/{eventId}/rating")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRating(@PathVariable("userId") Long userId,
                              @PathVariable("eventId") Long eventId) {
         eventService.deleteRating(userId, eventId);

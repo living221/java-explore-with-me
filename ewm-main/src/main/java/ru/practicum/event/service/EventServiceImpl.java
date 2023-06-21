@@ -352,6 +352,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public void addRating(Long userId, Long eventId, Boolean isPositive) {
         userRepository.findById(userId).orElseThrow(
                 () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
@@ -375,6 +376,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public void deleteRating(Long userId, Long eventId) {
         userRepository.findById(userId).orElseThrow(
                 () -> new ObjectNotFoundException(String.format("User with id=%s was not found", userId)));
