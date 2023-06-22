@@ -1,8 +1,11 @@
 package ru.practicum.user.model;
 
 import lombok.*;
+import ru.practicum.rating.model.Rating;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -21,4 +24,9 @@ public class User {
 
     @Column(name = "email", nullable = false, unique = true)
     private String email;
+
+    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
+    @JoinColumn(name = "initiator_id", insertable = false, nullable = false)
+    @ToString.Exclude
+    private Set<Rating> ratings = new HashSet<>();
 }
